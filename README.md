@@ -1,73 +1,134 @@
-# React + TypeScript + Vite
+# IWT Interactive - Conscious Spending Plan Builder
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An interactive financial planning tool based on Ramit Sethi's *I Will Teach You to Be Rich* methodology and the [Money Guy Financial Order of Operations](https://moneyguy.com/guide/foo/).
 
-Currently, two official plugins are available:
+**Live:** [https://dtmirizzi.github.io/iwt-interactive/](https://dtmirizzi.github.io/iwt-interactive/)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+> **Disclaimer:** This project is not affiliated with, endorsed by, or associated with Ramit Sethi, IWT Media, or The Money Guy Show. This is an independent, free, open-source tool for educational purposes only. It does not constitute financial advice.
 
-## React Compiler
+## Architecture
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Three-layer design:
 
-## Expanding the ESLint configuration
+1. **CSP Builder** (7-step linear wizard) - Collects your complete financial picture
+2. **Dashboard** - Displays your CSP with an editable spreadsheet table, doughnut chart, net worth breakdown, and Financial Order of Operations ladder
+3. **Workflow Machines** (6 XState machines) - Launched from the dashboard for deep-dive optimization
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### CSP Builder Steps
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+| Step | What it collects |
+|------|-----------------|
+| Welcome | Name, partner, age, filing status, tax year |
+| Net Worth | Assets, investment/retirement account balances, cash, debts |
+| Income | Gross + net monthly income per person |
+| Fixed Costs | All monthly expenses per person |
+| Investments | Monthly contributions to each account |
+| Savings Goals | Goals with targets, progress, and monthly contributions |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Dashboard Workflows
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Workflow | Gated By |
+|----------|----------|
+| Debt Payoff (Avalanche/Snowball) | Has debt |
+| Investment Ladder | Fixed costs < 70% |
+| Retirement Projections | Investing >= 5% |
+| Children & Education | FOO step 7+ |
+| Rich Life Design | Always available |
+| Account Automation | Fixed costs < 70% + investing > 0% |
+
+## Local Development
+
+### Prerequisites
+
+- Node.js 20+
+- npm
+
+### Setup
+
+```bash
+git clone git@github.com:dtmirizzi/iwt-interactive.git
+cd iwt-interactive
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Run
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
 ```
+
+Opens at [http://localhost:5173](http://localhost:5173) (port may vary if 5173 is in use).
+
+### Build
+
+```bash
+npm run build
+```
+
+Output goes to `dist/`.
+
+### Test
+
+```bash
+npm run test:run    # single run
+npm run test        # watch mode
+```
+
+100 tests across 5 files covering the state machine, CSP calculations, debt payoff algorithms, retirement utilities, and tax year configs.
+
+## Dev Mode
+
+Skip the 7-step builder and jump straight to the dashboard with pre-loaded test data by adding `?dev` to the URL.
+
+### Available Dev Profiles
+
+| URL | Profile | Description |
+|-----|---------|-------------|
+| `?dev` | Healthy couple | Alex & Jordan. Good CSP, most workflows unlocked. |
+| `?dev=solo` | Solo user | Sam. Single person, student loan debt. |
+| `?dev=overbudget` | Over-budget couple | Chris & Taylor. Fixed costs ~75%, heavy debt, most workflows locked. |
+
+### Examples
+
+```
+http://localhost:5173/?dev              # Couple dashboard (healthy)
+http://localhost:5173/?dev=solo         # Solo dashboard
+http://localhost:5173/?dev=overbudget   # Over-budget dashboard (locked workflows)
+```
+
+A red **DEV** badge appears in the header when dev mode is active.
+
+### Editing Test Data
+
+Test data lives in `src/testData.ts`. Modify the `SAMPLE_CSP_DATA`, `SAMPLE_CSP_DATA_SOLO`, or `SAMPLE_CSP_DATA_OVERBUDGET` objects and the dashboard hot-reloads instantly.
+
+## Tech Stack
+
+- **React 19** + **TypeScript**
+- **XState 5** - 7 state machines (1 builder + 6 workflows)
+- **@tanstack/react-table** - Editable CSP spreadsheet table
+- **Chart.js** + react-chartjs-2 - Doughnut and line charts
+- **React Hook Form** - Form validation in builder steps
+- **Vite** - Build tooling
+- **Vitest** - Testing
+
+## Tax Year Configuration
+
+IRS contribution limits, phase-outs, and thresholds are stored as versioned configs in `src/config/`. Currently supports 2025 and 2026 tax years.
+
+To add a new tax year: copy `src/config/tax-year-2026.ts`, update the numbers from the [IRS announcement](https://www.irs.gov/newsroom), and register it in `src/config/index.ts`.
+
+## Deployment
+
+Deploys to GitHub Pages automatically on push to `main` via `.github/workflows/deploy.yml`.
+
+To deploy manually:
+
+```bash
+npm run build
+# Upload contents of dist/ to any static host
+```
+
+## License
+
+MIT
