@@ -1253,7 +1253,6 @@ select:focus {
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 400;
-  white-space: nowrap;
   z-index: 10;
   line-height: 1.4;
   max-width: 300px;

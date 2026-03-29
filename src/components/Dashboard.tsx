@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import type { CSPData, DashboardState, WorkflowId } from '../types';
@@ -35,6 +35,11 @@ export function Dashboard({ cspData, onEditCSP, onUpdateCSP }: DashboardProps) {
     cspData,
     activeWorkflow: null,
   });
+
+  // Keep dashState.cspData in sync when cspData prop changes (e.g., inline table edits)
+  useEffect(() => {
+    setDashState(s => ({ ...s, cspData }));
+  }, [cspData]);
 
   const taxConfig = getTaxYearConfig(cspData.tax_year);
   const closeWorkflow = () => setDashState(s => ({ ...s, activeWorkflow: null }));
@@ -215,7 +220,7 @@ export function Dashboard({ cspData, onEditCSP, onUpdateCSP }: DashboardProps) {
           }
 
           return (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+            <div className="results__csp-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
               <NWCard label={userName} assets={myAssets} nonRet={myNonRet} retirement={myRetirement} cash={myCash} debt={myDebt} nw={myNW} />
               <NWCard label={partnerName} assets={pAssets} nonRet={pNonRet} retirement={pRetirement} cash={pCash} debt={pDebt} nw={pNW} />
               <NWCard label="Combined" assets={totalAssets} nonRet={totalNonRetirement} retirement={totalRetirement} cash={totalSavings} debt={totalDebt} nw={netWorth} />
@@ -409,10 +414,16 @@ export function Dashboard({ cspData, onEditCSP, onUpdateCSP }: DashboardProps) {
 
       {/* Active Workflow Modal */}
       {dashState.activeWorkflow && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
-        }}>
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeWorkflow(); }}
+          onKeyDown={(e) => { if (e.key === 'Escape') closeWorkflow(); }}
+          tabIndex={-1}
+          ref={(el) => el?.focus()}
+        >
           <div style={{ background: 'white', borderRadius: '12px', padding: '32px', maxWidth: '720px', width: '90%', maxHeight: '85vh', overflow: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h2 style={{ fontFamily: 'var(--font-serif)', margin: 0 }}>

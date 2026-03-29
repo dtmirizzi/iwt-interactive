@@ -132,7 +132,7 @@ function buildRows(cspData: CSPData, dashState: DashboardState): TableRow[] {
 
   // ── INCOME ────────────────────────────────────
   rows.push({ id: 'sec-income', kind: 'section', label: 'Income', myAmount: 0, partnerAmount: 0, combinedAmount: 0 });
-  rows.push({ id: 'income-gross', kind: 'item', label: 'Gross Monthly Income', myAmount: cspData.gross_monthly_income, partnerAmount: cspData.partner_gross_monthly ?? 0, combinedAmount: cspData.gross_monthly_income + (cspData.partner_gross_monthly ?? 0), editField: { source: 'income', field: 'gross' } });
+  rows.push({ id: 'income-gross', kind: 'item', label: 'Gross Monthly Income', myAmount: cspData.gross_monthly_income, partnerAmount: cspData.partner_gross_monthly ?? 0, combinedAmount: cspData.gross_monthly_income + (cspData.partner_gross_monthly ?? 0) });
   rows.push({ id: 'income-net', kind: 'subtotal', label: 'Net Monthly Income (take-home)', myAmount: myNet, partnerAmount: pNet, combinedAmount: net });
 
   // ── FIXED COSTS ───────────────────────────────
@@ -267,14 +267,14 @@ function buildRows(cspData: CSPData, dashState: DashboardState): TableRow[] {
   activeGoals.forEach(g => {
     const key = g.name.toLowerCase().trim();
     if (!goalsByName.has(key)) {
-      goalsByName.set(key, { goals: [], myTotal: 0, pTotal: 0, combinedTotal: 0, target: g.target_amount, saved: g.current_amount, targetDate: g.target_date });
+      goalsByName.set(key, { goals: [], myTotal: 0, pTotal: 0, combinedTotal: 0, target: g.target_amount, saved: 0, targetDate: g.target_date });
     }
     const entry = goalsByName.get(key)!;
     entry.goals.push(g);
     entry.combinedTotal += g.monthly_contribution;
+    entry.saved += g.current_amount; // accumulate saved from all contributors
     if (g.owner === 'individual') entry.myTotal += g.monthly_contribution;
     if (g.owner === 'partner') entry.pTotal += g.monthly_contribution;
-    // Use the max target and saved across merged entries (they reference the same goal)
     if (g.target_amount > entry.target) entry.target = g.target_amount;
     if (g.target_date && (!entry.targetDate || g.target_date < entry.targetDate)) entry.targetDate = g.target_date;
   });
@@ -295,7 +295,6 @@ function buildRows(cspData: CSPData, dashState: DashboardState): TableRow[] {
       const willSave = entry.combinedTotal * monthsLeft;
       const projectedTotal = entry.saved + willSave;
       const onTrack = projectedTotal >= entry.target;
-      const monthsNeeded = Math.ceil(remaining / entry.combinedTotal);
 
       projectionDetail += ` | by ${entry.targetDate}`;
 
@@ -307,9 +306,10 @@ function buildRows(cspData: CSPData, dashState: DashboardState): TableRow[] {
         projectionWarning = `Short by ${formatCurrency(shortfall)} at current rate. Need ${formatCurrency(neededMonthly)}/mo to hit target (${monthsLeft} months left).`;
       }
 
-      if (!entry.targetDate) {
-        projectionDetail += ` | ${monthsNeeded} months to go`;
-      }
+    } else if (entry.combinedTotal > 0 && remaining > 0) {
+      // No target date — just show months needed
+      const monthsNeeded = Math.ceil(remaining / entry.combinedTotal);
+      projectionDetail += ` | ${monthsNeeded} months to go`;
     } else if (remaining <= 0) {
       projectionDetail = 'Goal reached!';
     } else if (entry.combinedTotal === 0 && remaining > 0) {
