@@ -201,7 +201,11 @@ export function NetWorthStep({ meta, cspData, onUpdate, onNext, onBack }: NetWor
               <div className="child-card__fields">
                 <div className="form__field">
                   <label>Type</label>
-                  <select value={debt.category} onChange={(e) => { updateDebt(debt.id, 'category', e.target.value as DebtCategory); if (!debt.name) updateDebt(debt.id, 'name', DEBT_CATEGORIES.find(c => c.value === e.target.value)?.label ?? ''); }}>
+                  <select value={debt.category} onChange={(e) => {
+                    const cat = e.target.value as DebtCategory;
+                    const newName = !debt.name ? (DEBT_CATEGORIES.find(c => c.value === cat)?.label ?? '') : debt.name;
+                    onUpdate({ debts: cspData.debts.map(d => d.id === debt.id ? { ...d, category: cat, name: newName } : d) });
+                  }}>
                     {DEBT_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label} ({c.typical_apr} APR)</option>)}
                   </select>
                 </div>

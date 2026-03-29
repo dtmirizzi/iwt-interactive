@@ -151,7 +151,7 @@ export function InvestmentLadderWorkflow({ cspData, onComplete, onClose }: Inves
       {/* Step: Recommendations (final) */}
       {step === 'recommendations' && (
         <div>
-          <div className="ladder__list" style={{ marginBottom: '20px' }}>
+          <ol className="ladder__list" style={{ marginBottom: '20px' }}>
             {ladder.filter(r => r.annual_amount > 0).map(rec => (
               <li key={rec.account_type} className="ladder__item">
                 <div className="ladder__item-header">
@@ -163,7 +163,7 @@ export function InvestmentLadderWorkflow({ cspData, onComplete, onClose }: Inves
                 {rec.is_employer_match && <p className="ladder__item-match">Employer match: {rec.match_details}</p>}
               </li>
             ))}
-          </div>
+          </ol>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <button type="button" className="btn btn--secondary" onClick={onClose}>Close</button>
             <button type="button" className="btn btn--primary" onClick={handleComplete}>Save Ladder</button>

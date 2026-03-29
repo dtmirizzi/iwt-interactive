@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { StepLayout } from '../ui/StepLayout';
 import type { StepMeta } from '../../machines/cspBuilderMachine';
 import type { CSPData, FixedCostItem } from '../../types';
@@ -82,10 +83,10 @@ export function FixedCostsStep({ meta, cspData, onUpdate, onNext, onBack }: Fixe
   const userName = cspData.user_name || 'You';
   const partnerName = cspData.partner_name || 'Partner';
 
-  // Initialize with defaults per person if empty
-  if (items.length === 0) {
+  // Initialize with defaults per person if empty (in useEffect, not during render)
+  useEffect(() => {
+    if (items.length > 0) return;
     if (cspData.has_partner) {
-      // Each person gets their own set of default categories
       const myDefaults = DEFAULT_CATEGORIES.map(c => createItem(c.category, c.label, 'individual'));
       const partnerDefaults = DEFAULT_CATEGORIES.map(c => createItem(c.category, c.label, 'partner'));
       onUpdate({ fixed_costs: [...myDefaults, ...partnerDefaults] });
@@ -93,7 +94,8 @@ export function FixedCostsStep({ meta, cspData, onUpdate, onNext, onBack }: Fixe
       const defaults = DEFAULT_CATEGORIES.map(c => createItem(c.category, c.label, 'individual'));
       onUpdate({ fixed_costs: defaults });
     }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateItem = (id: string, field: keyof FixedCostItem, value: unknown) =>
     onUpdate({ fixed_costs: items.map(i => i.id === id ? { ...i, [field]: value } : i) });

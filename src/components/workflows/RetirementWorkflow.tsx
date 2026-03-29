@@ -31,8 +31,9 @@ export function RetirementWorkflow({ cspData, onComplete, onClose }: RetirementW
   const ctx = state.context;
   const step = state.value as string;
 
-  const totalRetBalance = cspData.current_investments.filter(i => isRetirementAccount(i.account_type)).reduce((s, i) => s + i.current_balance, 0);
-  const monthlyInv = cspData.current_investments.reduce((s, i) => s + i.monthly_contribution, 0);
+  const retirementInvestments = cspData.current_investments.filter(i => isRetirementAccount(i.account_type));
+  const totalRetBalance = retirementInvestments.reduce((s, i) => s + i.current_balance, 0);
+  const monthlyInv = retirementInvestments.reduce((s, i) => s + i.monthly_contribution, 0);
 
   const projection = useMemo(
     () => project(cspData.age, ctx.target_retirement_age, totalRetBalance, monthlyInv, ctx.expected_return),
@@ -64,8 +65,8 @@ export function RetirementWorkflow({ cspData, onComplete, onClose }: RetirementW
             </div>
             <div className="form__field">
               <label>Expected Annual Return (%)</label>
-              <p className="form__hint">Historical S&P 500 average: ~10% nominal, ~7% inflation-adjusted.</p>
-              <input type="number" step="0.01" min="0" max="0.20" value={ctx.expected_return} onChange={(e) => send({ type: 'UPDATE', data: { expected_return: Number(e.target.value) } })} />
+              <p className="form__hint">Historical S&P 500 average: ~10% nominal, ~7% inflation-adjusted. Enter as a whole number (e.g., 7 for 7%).</p>
+              <input type="number" step="0.5" min="0" max="20" value={Math.round(ctx.expected_return * 100 * 10) / 10} onChange={(e) => send({ type: 'UPDATE', data: { expected_return: Number(e.target.value) / 100 } })} />
             </div>
             <div className="form__callout">
               <p>Current retirement balance: <strong>{formatCurrency(totalRetBalance)}</strong></p>

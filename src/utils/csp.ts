@@ -32,7 +32,7 @@ export function evaluateBucket(
     case 'guilt_free':
       if (actual_pct >= target.min && actual_pct <= target.max) return { health: 'good', message: 'In the sweet spot. Enjoy it guilt-free.' };
       if (actual_pct < target.min && actual_pct > 0.10) return { health: 'warning', message: 'Below 20%. Make sure you are enjoying your money — burnout is real.' };
-      if (actual_pct < 0.10) return { health: 'danger', message: 'Under 10% guilt-free. You may be over-optimizing. A rich life includes spending on what you love.' };
+      if (actual_pct <= 0.10) return { health: 'danger', message: 'Under 10% guilt-free. You may be over-optimizing. A rich life includes spending on what you love.' };
       if (actual_pct > target.max) return { health: 'warning', message: 'Above 35%. Check if some of this should shift to investments or savings goals.' };
       return { health: 'good', message: '' };
   }

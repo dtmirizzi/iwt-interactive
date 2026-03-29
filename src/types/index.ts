@@ -11,8 +11,8 @@ export type AgeBracket = 'standard' | 'catch_up' | 'super_catch_up' | 'post_supe
 
 export function getAgeBracket(age: number): AgeBracket {
   if (age >= 60 && age <= 63) return 'super_catch_up';
-  if (age >= 50) return 'catch_up';
   if (age >= 64) return 'post_super';
+  if (age >= 50) return 'catch_up';
   return 'standard';
 }
 

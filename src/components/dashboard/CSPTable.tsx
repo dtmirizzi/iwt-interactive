@@ -168,7 +168,7 @@ function buildRows(cspData: CSPData, dashState: DashboardState): TableRow[] {
   fcByLabel.forEach((group) => {
     const allItems = [...group.my, ...group.partner, ...group.shared];
     const displayLabel = allItems[0].label || allItems[0].category;
-    const myAmt = group.my.reduce((s, c) => s + c.amount, 0) + group.shared.reduce((s, c) => s + c.amount, 0);
+    const myAmt = group.my.reduce((s, c) => s + c.amount, 0);
     const pAmt = group.partner.reduce((s, c) => s + c.amount, 0);
     const combined = allItems.reduce((s, c) => s + c.amount, 0);
 
@@ -345,9 +345,11 @@ function buildRows(cspData: CSPData, dashState: DashboardState): TableRow[] {
   });
 
   // ── GUILT-FREE ────────────────────────────────
-  // Per-person: their income minus their allocated amounts
-  const myAllocated = myFixedSum + myInvTotal + mySavSum;
-  const pAllocated = pFixedSum + pInvTotal + pSavSum;
+  // Per-person: their income minus their allocated amounts (including their share of buffer)
+  const myBufferShare = fixedSubtotal > 0 ? buffer * (myFixedSum / fixedSubtotal) : 0;
+  const pBufferShare = fixedSubtotal > 0 ? buffer * (pFixedSum / fixedSubtotal) : 0;
+  const myAllocated = myFixedSum + myBufferShare + myInvTotal + mySavSum;
+  const pAllocated = pFixedSum + pBufferShare + pInvTotal + pSavSum;
   const myGuiltFree = Math.max(0, myNet - myAllocated);
   const pGuiltFree = Math.max(0, pNet - pAllocated);
   const guiltFree = Math.max(0, net - fixedTotal - invTotal - savTotal);
@@ -390,10 +392,9 @@ export function CSPTable({ cspData, dashState, onUpdateCSP }: CSPTableProps) {
     onUpdateCSP(updated);
   }, [cspData, onUpdateCSP]);
 
-  const columnHelper = createColumnHelper<TableRow>();
-
   const columns = useMemo(() => {
-    const labelCol = columnHelper.accessor('label', {
+    const ch = createColumnHelper<TableRow>();
+    const labelCol = ch.accessor('label', {
       header: 'Item',
       cell: (info) => {
         const row = info.row.original;
@@ -411,17 +412,17 @@ export function CSPTable({ cspData, dashState, onUpdateCSP }: CSPTableProps) {
     if (hasP) {
       return [
         labelCol,
-        columnHelper.accessor('myAmount', { header: userName, cell: EditableAmountCell }),
-        columnHelper.accessor('partnerAmount', { header: partnerName, cell: EditableAmountCell }),
-        columnHelper.accessor('combinedAmount', { header: 'Combined', cell: EditableAmountCell }),
+        ch.accessor('myAmount', { header: userName, cell: EditableAmountCell }),
+        ch.accessor('partnerAmount', { header: partnerName, cell: EditableAmountCell }),
+        ch.accessor('combinedAmount', { header: 'Combined', cell: EditableAmountCell }),
       ];
     }
 
     return [
       labelCol,
-      columnHelper.accessor('combinedAmount', { header: 'Amount/mo', cell: EditableAmountCell }),
+      ch.accessor('combinedAmount', { header: 'Amount/mo', cell: EditableAmountCell }),
     ];
-  }, [hasP, userName, partnerName, columnHelper]);
+  }, [hasP, userName, partnerName]);
 
   const table = useReactTable({
     data,

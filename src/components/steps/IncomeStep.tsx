@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { StepLayout } from '../ui/StepLayout';
 import type { StepMeta } from '../../machines/cspBuilderMachine';
@@ -39,6 +39,20 @@ export function IncomeStep({ meta, cspData, onUpdate, onNext, onBack }: IncomeSt
     },
   });
 
+  // Reset form values when period toggles
+  useEffect(() => {
+    const mult = period === 'yearly' ? 12 : 1;
+    userForm.reset({
+      gross: (cspData.gross_monthly_income * mult) || undefined,
+      net: (cspData.net_monthly_income * mult) || undefined,
+    });
+    partnerForm.reset({
+      gross: ((cspData.partner_gross_monthly ?? 0) * mult) || undefined,
+      net: ((cspData.partner_net_monthly ?? 0) * mult) || undefined,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period]);
+
   const userGross = userForm.watch('gross');
   const userNet = userForm.watch('net');
   const partnerGross = partnerForm.watch('gross');
@@ -49,7 +63,12 @@ export function IncomeStep({ meta, cspData, onUpdate, onNext, onBack }: IncomeSt
 
   const periodLabel = period === 'monthly' ? 'Monthly' : 'Annual';
 
-  const handleNext = () => {
+  // Validate then proceed
+  const handleNext = async () => {
+    const userValid = await userForm.trigger();
+    const partnerValid = cspData.has_partner ? await partnerForm.trigger() : true;
+    if (!userValid || !partnerValid) return;
+
     const uGross = Number(userForm.getValues('gross') ?? 0) / divisor;
     const uNet = Number(userForm.getValues('net') ?? 0) / divisor;
 
@@ -89,18 +108,18 @@ export function IncomeStep({ meta, cspData, onUpdate, onNext, onBack }: IncomeSt
             <p className="form__hint">Total income before taxes.{period === 'yearly' ? ' Annual salary.' : ' Check your last pay stub.'}</p>
             <div className="form__input-group">
               <span className="form__prefix">$</span>
-              <input type="number" step="1" min="0" {...userForm.register('gross', { required: true, min: 1 })} />
+              <input type="number" step="1" min="0" {...userForm.register('gross', { required: 'Gross income is required', min: { value: 1, message: 'Must be greater than 0' } })} />
             </div>
-            {userForm.formState.errors.gross && <p className="form__error">Gross income is required</p>}
+            {userForm.formState.errors.gross && <p className="form__error">{userForm.formState.errors.gross.message}</p>}
           </div>
           <div className="form__field" style={{ marginTop: '10px' }}>
             <label>{periodLabel} Net Income (Take-Home)</label>
             <p className="form__hint">Amount that hits your bank account after taxes and deductions.</p>
             <div className="form__input-group">
               <span className="form__prefix">$</span>
-              <input type="number" step="1" min="0" {...userForm.register('net', { required: true, min: 1 })} />
+              <input type="number" step="1" min="0" {...userForm.register('net', { required: 'Net income is required', min: { value: 1, message: 'Must be greater than 0' } })} />
             </div>
-            {userForm.formState.errors.net && <p className="form__error">Net income is required</p>}
+            {userForm.formState.errors.net && <p className="form__error">{userForm.formState.errors.net.message}</p>}
           </div>
           {userTaxRate && (
             <div className="form__callout" style={{ marginTop: '10px' }}>
@@ -120,17 +139,17 @@ export function IncomeStep({ meta, cspData, onUpdate, onNext, onBack }: IncomeSt
               <label>{periodLabel} Gross Income</label>
               <div className="form__input-group">
                 <span className="form__prefix">$</span>
-                <input type="number" step="1" min="0" {...partnerForm.register('gross', { required: true, min: 1 })} />
+                <input type="number" step="1" min="0" {...partnerForm.register('gross', { required: `${partnerName}'s gross income is required`, min: { value: 1, message: 'Must be greater than 0' } })} />
               </div>
-              {partnerForm.formState.errors.gross && <p className="form__error">Gross income is required</p>}
+              {partnerForm.formState.errors.gross && <p className="form__error">{partnerForm.formState.errors.gross.message}</p>}
             </div>
             <div className="form__field" style={{ marginTop: '10px' }}>
               <label>{periodLabel} Net Income (Take-Home)</label>
               <div className="form__input-group">
                 <span className="form__prefix">$</span>
-                <input type="number" step="1" min="0" {...partnerForm.register('net', { required: true, min: 1 })} />
+                <input type="number" step="1" min="0" {...partnerForm.register('net', { required: `${partnerName}'s net income is required`, min: { value: 1, message: 'Must be greater than 0' } })} />
               </div>
-              {partnerForm.formState.errors.net && <p className="form__error">Net income is required</p>}
+              {partnerForm.formState.errors.net && <p className="form__error">{partnerForm.formState.errors.net.message}</p>}
             </div>
             {partnerTaxRate && (
               <div className="form__callout" style={{ marginTop: '10px' }}>

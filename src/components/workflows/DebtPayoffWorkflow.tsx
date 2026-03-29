@@ -15,7 +15,7 @@ export function DebtPayoffWorkflow({ cspData, onComplete, onClose }: DebtPayoffW
   const [state, send] = useMachine(debtPayoffMachine);
   const ctx = state.context;
   const step = state.value as string;
-  const activeDebts = cspData.debts.filter(d => d.balance > 0);
+  const activeDebts = useMemo(() => cspData.debts.filter(d => d.balance > 0), [cspData.debts]);
 
   const comparison = useMemo(
     () => compareStrategies(activeDebts, ctx.extra_monthly),

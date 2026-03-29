@@ -53,7 +53,7 @@ export function WelcomeStep({ meta, cspData, onUpdate, onNext, onSetTaxYear }: W
               <button
                 type="button"
                 className={`choice-card choice-card--compact ${!cspData.has_partner ? 'choice-card--selected' : ''}`}
-                onClick={() => onUpdate({ has_partner: false })}
+                onClick={() => onUpdate({ has_partner: false, partner_name: '', partner_age: undefined, partner_gross_monthly: undefined, partner_net_monthly: undefined, partner_cash_savings: undefined })}
               >
                 Solo
               </button>
